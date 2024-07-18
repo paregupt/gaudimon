@@ -13,4 +13,4 @@ The tiles in the heatmap are click-able to focus the dashboard only to that spec
 <img width="357" alt="image" src="https://github.com/user-attachments/assets/e704f662-27c8-44db-b5bf-4d48ae4004b6">
 
 After focusing the dashboard to a specific host, expand "OAM Statistics" to find more details.
-<img width="1715" alt="image" src="https://github.com/user-attachments/assets/6b5bb9b9-9363-45fe-b5bb-94a7d7e0c72e">
+<img width="1713" alt="image" src="https://github.com/user-attachments/assets/924daee9-a81f-4aa1-a111-9c92d2439c62">
