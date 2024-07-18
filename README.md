@@ -20,5 +20,5 @@ Details of a host when training starts.
 
 Heatmap of all the OAMs for their temperature, ECC, Memory usage, Utilization, and Power usage as training completes. Best practice to wait for all the tiles to turn green before starting the next job because sometimes an OAM takes longer to free up from the earlier job.
 
-https://github.com/user-attachments/assets/e0019d81-afa8-4fff-9c4e-d4df165ded85
+![ezgif-1-2f7e6b0cbd](https://github.com/user-attachments/assets/b8fc4d1f-3d65-47af-9677-ab977a328d94)
 
