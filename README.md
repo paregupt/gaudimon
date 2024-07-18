@@ -14,3 +14,11 @@ The tiles in the heatmap are click-able to focus the dashboard only to that spec
 
 After focusing the dashboard to a specific host, expand "OAM Statistics" to find more details.
 <img width="1713" alt="image" src="https://github.com/user-attachments/assets/924daee9-a81f-4aa1-a111-9c92d2439c62">
+
+Details of a host when training starts.
+<img width="1714" alt="image" src="https://github.com/user-attachments/assets/c268698a-3ca9-4b46-8803-2af5f52a9eb7">
+
+Heatmap of all the OAMs for their temperature, ECC, Memory usage, Utilization, and Power usage as training completes. Best practice to wait for all the tiles to turn green before starting the next job because sometimes an OAM takes longer to free up from the earlier job.
+
+https://github.com/user-attachments/assets/e0019d81-afa8-4fff-9c4e-d4df165ded85
+
