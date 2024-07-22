@@ -1,3 +1,6 @@
+# Monitor Intel Gaudi Accelerators using Grafana, InfluxDB and Telegraf.
+
+## Use Cases
 31 hosts in a training cluster, each host with eight Gaudi accelerators (OAMs). All 248 OAMs in good health (shown in green).
 <img width="1716" alt="image" src="https://github.com/user-attachments/assets/d83de828-1192-4168-ae75-8f46b608e49e">
 
