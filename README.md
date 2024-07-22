@@ -1,5 +1,5 @@
 # Monitor Intel Gaudi Accelerators using Grafana, InfluxDB and Telegraf.
-
+The exec input plugin in telegraf runs the collector, gaudi_mon.py and sends the data to the output plugin, influxdb. Grafana reads from influxdb to serve the following and many more use cases.
 ## Use Cases
 31 hosts in a training cluster, each host with eight Gaudi accelerators (OAMs). All 248 OAMs in good health (shown in green).
 <img width="1716" alt="image" src="https://github.com/user-attachments/assets/d83de828-1192-4168-ae75-8f46b608e49e">
@@ -25,3 +25,69 @@ Heatmap of all the OAMs for their temperature, ECC, Memory usage, Utilization, a
 
 ![ezgif-1-2f7e6b0cbd](https://github.com/user-attachments/assets/b8fc4d1f-3d65-47af-9677-ab977a328d94)
 
+## Installation
+A typical environment would have many HLS-Gaudi2 servers (e.g. 32) and one monitoring/management server. Install telegraf on all the (32) HLS-Gaudi2 servers and use its exec input plugin to run the collector, gaudi_mon.py. Telegraf then sends the metrics to the same InfluxDB running on the monitoring/management server. Grafana also runs on the monitoring/management server.
+
+Ubuntun packages are available in this project.
+
+### Telegraf
+Install telegraf on all the HLS2-Gaudi2 servers.
+Tested version: 1.29.5
+```
+sudo dpkg -i telegraf_1.29.5-1_amd64.deb
+```
+Create /usr/local/telegraf director and copy gaudi_mon.py inside it.
+
+The following is the telegraf.conf config
+```
+  logfile = "/var/log/telegraf/telegraf.log"
+  logfile_rotation_max_size = "10MB"
+  logfile_rotation_max_archives = 5
+
+[[inputs.exec]]
+   interval = "5s"
+   commands = [
+       "python3 /usr/local/telegraf/gaudi_mon.py -s -sobm -vv influxdb-lp",
+   ]
+   #timeout = "9s"
+   data_format = "influx"
+
+[[inputs.exec]]
+   interval = "60s"
+   commands = [
+       "python3 /usr/local/telegraf/gaudi_mon.py -m -sobm -vv influxdb-lp",
+   ]
+   timeout = "10s"
+   data_format = "influx"
+
+[[inputs.exec]]
+   interval = "60s"
+   commands = [
+       "python3 /usr/local/telegraf/gaudi_mon.py -iis -sobm -vv influxdb-lp",
+   ]
+   timeout = "59s"
+   data_format = "influx"
+
+[[inputs.exec]]
+   interval = "10s"
+   commands = [
+       "python3 /usr/local/telegraf/gaudi_mon.py -eist -sobm -vv influxdb-lp",
+   ]
+   data_format = "influx"
+
+#[[inputs.exec]]
+#   interval = "60s"
+#   commands = [
+#       "python3 /usr/local/telegraf/gaudi_mon.py -eis -sobm -vv influxdb-lp",
+#   ]
+#   timeout = "59s"
+#   data_format = "influx"
+
+ [[outputs.influxdb]]
+    urls = ["http://<ip>:8086"]
+    database = "telegraf"
+```
+
+## Notes
+1. This project uses InfluxDB 1.x.
+2. This project has run successfully for a few months monitoring Intel Gaudi 2 accelerators.
