@@ -25,6 +25,19 @@ Heatmap of all the OAMs for their temperature, ECC, Memory usage, Utilization, a
 
 ![ezgif-1-2f7e6b0cbd](https://github.com/user-attachments/assets/b8fc4d1f-3d65-47af-9677-ab977a328d94)
 
+Stats reported by ethtools for Gaudi internal interfaces during training or HCCL benchmark. In addition to utilization (bytes_rx and bytes_tx), these charts report spmu_req_out_of_range_psn, spmu_req_unset_psn, spmu_res_duplicate_psn, and spmu_res_out_of_sequence_psn, CRC, corrected words, uncorrected words, etc. 
+
+<img width="1715" alt="image" src="https://github.com/user-attachments/assets/f679e577-399e-49eb-8f8e-c2cc8960eff0">
+
+Stats reported by ethtools for Gaudi external interfaces during training or HCCL benchmark. The gaudimon collector stitches the output with the connected switchport using LLDP. The output is similar to as shown for Gaudi internal interfaces, but this traffic leaves a server to scale-out training.
+<img width="1707" alt="image" src="https://github.com/user-attachments/assets/fc0ada8c-b6c7-4878-baa8-cf42ace34cb4">
+
+<img width="1708" alt="image" src="https://github.com/user-attachments/assets/afde1dc5-0e3b-46ae-9564-2433080cbf30">
+<img width="1712" alt="image" src="https://github.com/user-attachments/assets/b753a49b-3ad1-4152-8ba8-23f175b8ea8c">
+<img width="1711" alt="image" src="https://github.com/user-attachments/assets/04473f36-c28c-4233-b86c-706c3022a05c">
+<img width="1708" alt="image" src="https://github.com/user-attachments/assets/89c2eef2-b471-494d-acd0-f23c57e37a11">
+<img width="1712" alt="image" src="https://github.com/user-attachments/assets/ed71e330-ed1d-4dc6-a7d9-fae47faea1dc">
+
 ## Installation
 A typical environment would have many HLS-Gaudi2 servers (e.g. 32) and one monitoring/management server. Install telegraf on all the (32) HLS-Gaudi2 servers and use its exec input plugin to run the collector, gaudi_mon.py. Telegraf then sends the metrics to the same InfluxDB running on the monitoring/management server. Grafana also runs on the monitoring/management server.
 
