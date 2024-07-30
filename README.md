@@ -25,6 +25,9 @@ Heatmap of all the OAMs for their temperature, ECC, Memory usage, Utilization, a
 
 ![ezgif-1-2f7e6b0cbd](https://github.com/user-attachments/assets/b8fc4d1f-3d65-47af-9677-ab977a328d94)
 
+Gaudi external interface states, when and how long the links were down
+<img width="1713" alt="image" src="https://github.com/user-attachments/assets/38ae041c-acf3-4c3c-8d52-c0511cc2816b">
+
 Stats reported by ethtools for Gaudi internal interfaces during training or HCCL benchmark. In addition to utilization (bytes_rx and bytes_tx), these charts report spmu_req_out_of_range_psn, spmu_req_unset_psn, spmu_res_duplicate_psn, and spmu_res_out_of_sequence_psn, CRC, corrected words, uncorrected words, etc. 
 
 <img width="1715" alt="image" src="https://github.com/user-attachments/assets/f679e577-399e-49eb-8f8e-c2cc8960eff0">
