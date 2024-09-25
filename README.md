@@ -35,6 +35,8 @@ Stats reported by ethtools for Gaudi internal interfaces during training or HCCL
 Stats reported by ethtools for Gaudi external interfaces during training or HCCL benchmark. The gaudimon collector stitches the output with the connected switchport using LLDP. The output is similar to as shown for Gaudi internal interfaces, but this traffic leaves a server to scale-out training.
 <img width="1707" alt="image" src="https://github.com/user-attachments/assets/fc0ada8c-b6c7-4878-baa8-cf42ace34cb4">
 
+These detailed graphs explain obscure problems. For example, these graphs show that cw_uncorrect_accum counters are highest on enp179s0d8 and enp77s0d23. These Linux interfaces connect to switchports Eth1/2/1 on switch SW-L1-H-12 and Eth1/1/1 on switch SW-L5-F-08 respectively. These transceivers and cables need verification for excessive bit errors. Also note that the aFrameCheckSequenceErrors (CRC) are reported on the same interfaces during the same time. CRC packets are dropped, explaining the rise in spmu_req_out_of_range_psn, spmu_req_unset_psn, spmu_res_duplicate_psn, and spmu_res_out_of_sequence_psn counters.
+
 <img width="1715" alt="image" src="https://github.com/user-attachments/assets/e5dcadf3-3cc2-4f45-8c55-e79aac86d158">
 
 <img width="1715" alt="image" src="https://github.com/user-attachments/assets/8de606ff-69a4-428b-93e5-9ea1509cbcc0">
