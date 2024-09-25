@@ -4,7 +4,7 @@ desired output format"""
 
 __author__ = "Paresh Gupta"
 __version__ = "1.00"
-__updated__ = "21-Jul-2024-10-PM-PDT"
+__updated__ = "25-Sep-2024-4-PM-PDT"
 
 import sys
 import os
@@ -14,18 +14,16 @@ from logging.handlers import RotatingFileHandler
 import subprocess
 import json
 import re
-from ipaddress import IPv4Interface
 
-HOURS_IN_DAY = 24
-MINUTES_IN_HOUR = 60
-SECONDS_IN_MINUTE = 60
 PCIE_STR = '/sys/bus/pci/drivers/habanalabs/'
-OAM_ID_TO_BUS_ID = '3, 0000:34:00.0\n2, 0000:33:00.0\n6, 0000:9a:00.0\n0, 0000:4d:00.0\n7, 0000:9b:00.0\n1, 0000:4e:00.0\n4, 0000:b3:00.0\n5, 0000:b4:00.0\n'
+OAM_ID_TO_BUS_ID = '3, 0000:34:00.0\n2, 0000:33:00.0\n6, 0000:9a:00.0\n0, ' \
+                    '0000:4d:00.0\n7, 0000:9b:00.0\n1, 0000:4e:00.0\n4, ' \
+                    '0000:b3:00.0\n5, 0000:b4:00.0\n'
 
 user_args = {}
 FILENAME_PREFIX = __file__.replace('.py', '')
 INPUT_FILE_PREFIX = ''
-hostname = ''
+HOSTNAME = ''
 
 LOGFILE_LOCATION = '/var/log/telegraf/'
 LOGFILE_SIZE = 10000000
@@ -52,7 +50,6 @@ def pre_checks_passed(argv):
 
     return True
 
-
 def parse_cmdline_arguments():
     """Parse input arguments"""
 
@@ -66,23 +63,23 @@ def parse_cmdline_arguments():
     parser.add_argument('output_format', action='store', help='specify the \
             output format', choices=['dict', 'influxdb-lp'])
     parser.add_argument('-s', dest='stats', \
-            action='store_true', default=False, help='Collect Gaudi card Stats\
-            like power usage, utilization, temperature, etc. OK to run this at \
-            a fine granularity of 5s')
+            action='store_true', default=False, help='Collect Gaudi card \
+            stats like power usage, utilization, temperature, etc. \
+            OK to run this at a fine granularity of 5s')
     parser.add_argument('-m', dest='meta', \
             action='store_true', default=False, help='Collect Gaudi card \
             metadata like serial, model, etc. This information is not \
             expected to change, so run this at 1h or longer')
     parser.add_argument('-iis', dest='int_intf_stats', \
             action='store_true', default=False, help='Collect Gaudi card \
-            Internal Interfaces Stats. This collection takes approx 30s so \
+            Internal Interface Stats (iis). This collection takes approx 30s so \
             run it at 60s or longer')
     parser.add_argument('-eis', dest='ext_intf_stats', \
             action='store_true', default=False, help='Collect Gaudi card \
-            External Interfaces Stats')
+            External Interface Stats (eis)')
     parser.add_argument('-eist', dest='ext_intf_status', \
             action='store_true', default=False, help='Gaudi card \
-            External Interfaces Status. No stats.')
+            External Interfaces Status (eist). No stats.')
     parser.add_argument('-sobm', dest='sobm', \
             action='store_true', default=False, help='Use Static OAM to BUS-id \
              mapping. This option is useful under failure conditions when an \
@@ -137,7 +134,8 @@ def setup_logging():
 
         rotator = RotatingFileHandler(logfile_name, maxBytes=LOGFILE_SIZE,
                                       backupCount=LOGFILE_NUMBER)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - ' \
+                                      '%(message)s')
         rotator.setFormatter(formatter)
         logger.addHandler(rotator)
 
@@ -157,14 +155,15 @@ def setup_logging():
 ###############################################################################
 
 def run_cmd(cmd):
+    """Generic function to run any OS command"""
     cmd_list = cmd.split(' ')
     ret = None
     # TODO: This ret needs proper handling
     try:
         output = subprocess.run(cmd_list, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stderr=subprocess.PIPE, check=False)
         if output.returncode != 0:
-            logger.error(cmd + ' failed:' + \
+            logger.error('%s failed:%s', cmd, \
                          str(output.stderr.decode('utf-8').strip()))
         else:
             ret = str(output.stdout.decode('utf-8').strip())
@@ -173,18 +172,19 @@ def run_cmd(cmd):
     return ret
 
 def get_gaudi_module_id_and_bus_id():
-    global hostname
+    """Get module ID and bus ID and build the host_dict structure"""
+    global HOSTNAME
     hostname_cmd = 'cat /etc/hostname'
     result = run_cmd(hostname_cmd)
     if result is None:
-        logger.error('Error: ' + hostname_cmd)
+        logger.error('Error: %s', hostname_cmd)
         return
-    hostname = result
-    logger.info('Got hostname: %s', hostname)
-    host_dict[hostname] = {}
-    host_dict[hostname]['gaudi2'] = {}
-    host_dict[hostname]['meta'] = {}
-    gaudi_dict = host_dict[hostname]['gaudi2']
+    HOSTNAME = result
+    logger.info('Got hostname: %s', HOSTNAME)
+    host_dict[HOSTNAME] = {}
+    host_dict[HOSTNAME]['gaudi2'] = {}
+    host_dict[HOSTNAME]['meta'] = {}
+    gaudi_dict = host_dict[HOSTNAME]['gaudi2']
 
     logger.info('Getting oam id  and bus id')
 
@@ -209,12 +209,13 @@ def get_gaudi_module_id_and_bus_id():
         gaudi_dict[oam_id]['stats'] = {}
 
 def get_gaudi_l_stats():
-    gaudi_dict = host_dict[hostname]['gaudi2']
+    """Parse hl-smi output to capture stats and update them in host_dict"""
+    gaudi_dict = host_dict[HOSTNAME]['gaudi2']
     logger.info('Getting Gaudi stats')
     cmd = 'hl-smi'
     result = run_cmd(cmd)
     if result is None:
-        logger.error('Error: ' + cmd)
+        logger.error('Error: %s', cmd)
         return
     sub_result = result[result.find('Compute M'): result.find('Compute Processes')]
     section_list = sub_result.split('-------------------------------')
@@ -226,9 +227,10 @@ def get_gaudi_l_stats():
         pwr_max = ''.join(re.findall(r'/ (\d+)W \|', section, re.IGNORECASE))
         mem = ''.join(re.findall(r'(\d+)MiB /', section, re.IGNORECASE))
         mem_max = ''.join(re.findall(r'/ (\d+)MiB \|', section, re.IGNORECASE))
-        un_ecc = ''.join(re.findall(r'\|[ ]{1,}(\d+)  \|\n\|', section, re.IGNORECASE))
+        un_ecc = ''.join(re.findall(r'\|[ ]{1,}(\d+)  \|\n\|', section, \
+                         re.IGNORECASE))
 
-        # Ignore when reported temperature is very large unrealistic number like 505712272
+        # Ignore  but log very large unrealistic number like 505712272
         if temperature != '' and int(temperature) > 300:
             logger.warning('TEMPERATURE out of bound > 300 C for %s', bus_id)
             continue
@@ -246,15 +248,16 @@ def get_gaudi_l_stats():
                 break
 
 def get_gaudi_meta_data():
-    gaudi_dict = host_dict[hostname]['gaudi2']
-    host_meta_dict = host_dict[hostname]['meta']
+    """Capture metadata and update them in host_dict"""
+    gaudi_dict = host_dict[HOSTNAME]['gaudi2']
+    host_meta_dict = host_dict[HOSTNAME]['meta']
 
     logger.info('Getting metadata')
 
     os_cmd = 'cat /etc/os-release'
     os_result = run_cmd(os_cmd)
     if os_result is None:
-        logger.error('Error: ' + os_cmd)
+        logger.error('Error: %s', os_cmd)
         return
     host_meta_dict['os_release'] = \
         ''.join(re.findall(r'PRETTY_NAME="(.*)"', os_result, re.IGNORECASE))
@@ -262,31 +265,38 @@ def get_gaudi_meta_data():
     lscpu_cmd = 'lscpu'
     lscpu_result = run_cmd(lscpu_cmd)
     if lscpu_result is None:
-        logger.error('Error: ' + lscpu_cmd)
+        logger.error('Error: %s', lscpu_cmd)
         return
     host_meta_dict['cpu_model'] = \
-            ''.join(re.findall(r'Model name:[ ]{1,}(.*)\n', lscpu_result, re.IGNORECASE))
+            ''.join(re.findall(r'Model name:[ ]{1,}(.*)\n', lscpu_result, \
+                    re.IGNORECASE))
 
     nproc_cmd = 'nproc'
     nproc_result = run_cmd(nproc_cmd)
     if nproc_result is None:
-        logger.error('Error: ' + nproc_cmd)
+        logger.error('Error: %s', nproc_cmd)
         return
     host_meta_dict['num_cpu'] = nproc_result
 
     cmd = 'hl-smi -q'
     result = run_cmd(cmd)
     if result is None:
-        logger.error('Error: ' + cmd)
+        logger.error('Error: %s', cmd)
         return
-    driver_ver = ''.join(re.findall(r'Driver Version.*: (.*)\n', result, re.IGNORECASE))
+    driver_ver = ''.join(re.findall(r'Driver Version.*: (.*)\n', result, \
+                                    re.IGNORECASE))
     result_list = result.split('] AIP')
     for output in result_list:
-        bus_id = ''.join(re.findall(r'Bus Id.*: (.*)\n', output, re.IGNORECASE))
-        gaudi_model = ''.join(re.findall(r'Product Name.*: (.*)\n', output, re.IGNORECASE))
-        serial = ''.join(re.findall(r'Serial Number.*: (.*)\n', output, re.IGNORECASE))
-        status = ''.join(re.findall(r'Module status.*: (.*)\n', output, re.IGNORECASE))
-        clock = re.findall(r'] soc.*: (\d+.*) MHz|$', output, re.IGNORECASE)[0]
+        bus_id = ''.join(re.findall(r'Bus Id.*: (.*)\n', output, \
+                         re.IGNORECASE))
+        gaudi_model = ''.join(re.findall(r'Product Name.*: (.*)\n', output, \
+                              re.IGNORECASE))
+        serial = ''.join(re.findall(r'Serial Number.*: (.*)\n', output, \
+                         re.IGNORECASE))
+        status = ''.join(re.findall(r'Module status.*: (.*)\n', output, \
+                         re.IGNORECASE))
+        clock = re.findall(r'] soc.*: (\d+.*) MHz|$', output, \
+                           re.IGNORECASE)[0]
 
         for oam_id, oam_attr in gaudi_dict.items():
             if bus_id == oam_attr['bus_id']:
@@ -298,7 +308,9 @@ def get_gaudi_meta_data():
                 meta_dict['clock'] = clock
 
 def get_gaudi_internal_intf_stats():
-    gaudi_dict = host_dict[hostname]['gaudi2']
+    """Capture relevant stats from internal interfaces on Gaudi cards and
+    update them in host_dict"""
+    gaudi_dict = host_dict[HOSTNAME]['gaudi2']
 
     logger.info('Getting Gaudi internal interface stats')
 
@@ -309,7 +321,7 @@ def get_gaudi_internal_intf_stats():
         link_cmd = 'hl-smi -n link -i ' + bus_id
         link_result = run_cmd(link_cmd)
         if link_result is None:
-            logger.error('Error: ' + link_cmd)
+            logger.error('Error: %s', link_cmd)
             continue
         # Output format is
         # port 7: UP
@@ -329,7 +341,7 @@ def get_gaudi_internal_intf_stats():
         s_cmd = 'hl-smi -n stats -i ' + bus_id
         s_result = run_cmd(s_cmd)
         if s_result is None:
-            logger.error('Error: ' + s_cmd)
+            logger.error('Error: %s', s_cmd)
             continue
         # Output format is
         # port 0:
@@ -346,11 +358,11 @@ def get_gaudi_internal_intf_stats():
         # Instead of etherStatsOctets, use OctetsReceivedOK, OctetsTransmittedOK
         # Instead of etherStatsPkts, use aFramesReceivedOK, aFramesTransmittedOK
         # Also skip duplicates for In and Out
-        skip = ('etherStatsOctets', 'etherStatsPkts', 'etherStatsPkts64Octets', \
-                'etherStatsPkts65to127Octets', 'etherStatsPkts128to255Octets', \
-                'etherStatsPkts256to511Octets', 'etherStatsPkts512to1023Octets', \
-                'etherStatsPkts1024to1518Octets', 'etherStatsPkts1519toMaxOctets', \
-                'etherStatsPkts1519toMaxOctets')
+        skip = ('etherStatsOctets', 'etherStatsPkts', 'etherStatsPkts64Octets',\
+            'etherStatsPkts65to127Octets', 'etherStatsPkts128to255Octets',\
+            'etherStatsPkts256to511Octets', 'etherStatsPkts512to1023Octets',\
+            'etherStatsPkts1024to1518Octets', 'etherStatsPkts1519toMaxOctets',\
+            'etherStatsPkts1519toMaxOctets')
         for line in s_result.splitlines():
             if 'port' in line:
                 s_port = int(''.join(re.findall(r'\d+', line, re.IGNORECASE)))
@@ -371,7 +383,9 @@ def get_gaudi_internal_intf_stats():
                 ps_dict[k] = v
 
 def get_gaudi_external_intf_stats():
-    gaudi_dict = host_dict[hostname]['gaudi2']
+    """Capture relevant stats from external interfaces on Gaudi cards and
+    update them in host_dict"""
+    gaudi_dict = host_dict[HOSTNAME]['gaudi2']
 
     logger.info('Getting Gaudi external interface stats')
 
@@ -382,13 +396,13 @@ def get_gaudi_external_intf_stats():
         cmd = 'ls ' + intf_path
         result = run_cmd(cmd)
         if result is None:
-            logger.error('Error: ' + cmd)
+            logger.error('Error: %s', cmd)
             continue
         for intf_name in result.splitlines():
             address = 'cat ' + intf_path + intf_name + '/address'
             mac = run_cmd(address)
             if mac is None:
-                logger.error('Error: ' + address)
+                logger.error('Error: %s', address)
                 continue
             ei_dict[mac] = {}
             ei_dict[mac]['meta'] = {}
@@ -398,7 +412,7 @@ def get_gaudi_external_intf_stats():
             operstate = 'cat ' + intf_path + intf_name + '/operstate'
             operstate_r = run_cmd(operstate)
             if operstate_r is None:
-                logger.error('Error: ' + operstate)
+                logger.error('Error: %s', operstate)
                 continue
             ei_dict[mac]['meta']['oper_state'] = operstate_r
 
@@ -406,7 +420,7 @@ def get_gaudi_external_intf_stats():
                 speed_cmd = 'cat ' + intf_path + intf_name + '/speed'
                 speed_r = run_cmd(speed_cmd)
                 if speed_r is None:
-                    logger.error('Error: ' + speed_cmd)
+                    logger.error('Error: %s', speed_cmd)
                     continue
                 ei_dict[mac]['meta']['oper_speed'] = speed_r
 
@@ -414,7 +428,7 @@ def get_gaudi_external_intf_stats():
             lldp_cmd = 'sudo lldptool -t -n -i ' + intf_name
             lldp_r = run_cmd(lldp_cmd)
             if lldp_r is None:
-                logger.error('Error: ' + lldp_cmd)
+                logger.error('Error: %s', lldp_cmd)
             else:
                 i = 0
                 result_list = lldp_r.splitlines()
@@ -426,7 +440,8 @@ def get_gaudi_external_intf_stats():
                         ei_dict[mac]['meta']['peer_name'] = peer_name
                     if 'Port ID TLV' in line:
                         # Port name is in the next line
-                        peer_intf = result_list[i].replace('Ifname: ', '').strip()
+                        peer_intf = result_list[i].replace('Ifname: ', '').\
+                                                   strip()
                         ei_dict[mac]['meta']['peer_intf'] = peer_intf
                     if 'System capabilities' in line and 'ridge' in line:
                         ei_dict[mac]['meta']['peer_type'] = 'switch'
@@ -440,50 +455,57 @@ def get_gaudi_external_intf_stats():
             cdc = 'cat ' + intf_path + intf_name + '/carrier_down_count'
             cdc_r = run_cmd(cdc)
             if cdc_r is None:
-                logger.error('Error: ' + cdc)
+                logger.error('Error: %s', cdc)
             else:
                 eis_dict['cdc'] = cdc_r
 
             cuc = 'cat ' + intf_path + intf_name + '/carrier_up_count'
             cuc_r = run_cmd(cuc)
             if cuc_r is None:
-                logger.error('Error: ' + cuc)
+                logger.error('Error: %s', cuc)
             else:
                 eis_dict['cuc'] = cuc_r
 
             if user_args['ext_intf_status']:
-                logger.debug('Collecting only status. No stats: ' + intf_name)
+                logger.debug('Collecting only status. No stats: %s', intf_name)
                 continue
 
             # get ethtool stats
             ethtool_cmd = 'ethtool -S ' + intf_name
             ethtool_r = run_cmd(ethtool_cmd)
             if ethtool_r is None:
-                logger.error('Error: ' + ethtool_cmd)
+                logger.error('Error: %s', ethtool_cmd)
                 continue
 
-            # Output is in the following format
-            #NIC statistics:
-            #     rx_packets: 56529
-            #     tx_packets: 38117
-            #     rx_bytes: 17685919
-            # Skip counters
-            # etherStatsOctets and etherStatsPkts are used for Tx and Rx
-            # Instead of etherStatsOctets, use OctetsReceivedOK, OctetsTransmittedOK
-            # Instead of etherStatsPkts, use aFramesReceivedOK, aFramesTransmittedOK
-            # Also skip duplicates for In and Out
-            skip = ('etherStatsOctets', 'etherStatsPkts', 'etherStatsPkts64Octets', \
-                    'etherStatsPkts65to127Octets', 'etherStatsPkts128to255Octets', \
-                    'etherStatsPkts256to511Octets', 'etherStatsPkts512to1023Octets', \
-                    'etherStatsPkts1024to1518Octets', 'etherStatsPkts1519toMaxOctets', \
+            '''
+            Output is in the following format
+            NIC statistics:
+                 rx_packets: 56529
+                 tx_packets: 38117
+                 rx_bytes: 17685919
+            Skip counters
+            etherStatsOctets and etherStatsPkts are used for Tx and Rx
+            Instead of etherStatsOctets,
+                    use OctetsReceivedOK, OctetsTransmittedOK
+            Instead of etherStatsPkts,
+                    use aFramesReceivedOK, aFramesTransmittedOK
+            Also skip duplicates for In and Out
+            '''
+            skip = ('etherStatsOctets', 'etherStatsPkts', \
+                    'etherStatsPkts64Octets', 'etherStatsPkts65to127Octets', \
+                    'etherStatsPkts128to255Octets', \
+                    'etherStatsPkts256to511Octets', \
+                    'etherStatsPkts512to1023Octets', \
+                    'etherStatsPkts1024to1518Octets', \
+                    'etherStatsPkts1519toMaxOctets', \
                     'etherStatsPkts1519toMaxOctets')
             for line in ethtool_r.splitlines():
                 if 'NIC' in line:
                     continue
                 if ':' in line:
                     k, v = line.split(':')
-                    # Remove space in counter name e.g.pre_FEC_SER_exp (negative),\
-                    # Congestion Q err
+                    # Remove space in counter name
+                    # e.g.pre_FEC_SER_exp (negative), Congestion Q err
                     k = k.strip().replace(' ', '_').replace('(', '').\
                         replace(')', '')
                     if k in skip:
@@ -550,7 +572,8 @@ def print_output_in_influxdb_lp():
                 if key in ('clock'):
                     gaudi_fields = gaudi_fields + sep + key + '=' + str(val)
                 else:
-                    gaudi_fields = gaudi_fields + sep + key + '="' + str(val) + '"'
+                    gaudi_fields = gaudi_fields + sep + key + '="' + \
+                                   str(val) + '"'
             for key, val in gaudi_stats_dict.items():
                 sep = ' ' if gaudi_fields == '' else ','
                 # Avoid null tags
@@ -560,8 +583,8 @@ def print_output_in_influxdb_lp():
 
             if gaudi_fields != '':
                 gaudi_fields = gaudi_fields + host_meta_str + '\n'
-                gaudi_str = gaudi_str + gaudi_prefix + host_tags + gaudi_tags + \
-                        gaudi_fields
+                gaudi_str = gaudi_str + gaudi_prefix + host_tags + \
+                            gaudi_tags + gaudi_fields
 
             ii_dict = oam_attr['intf_dict']['internal']
             for port, port_attr in ii_dict.items():
