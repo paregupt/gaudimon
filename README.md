@@ -10,7 +10,7 @@ Compare to a condition when training failed because one OAM is lost. Find this i
 Another instance when 1 out of 256 OAM went to a Disabled state (different from being lost).
 <img width="1428" alt="image" src="https://github.com/user-attachments/assets/cbb89cfa-4f73-40d3-8975-91c5adaa3d6f">
 
-Training job kept failing after running for a few mins. No obvious reason was found. But one OAM (connected to bus 9b on host gaudi-2-14) kept reporting excessive power usage (1900 W) even more than the cap (600 W). This spike happened exactly when the training started. Replacing this card made the training complete successfully. 
+Training job kept failing after running for a few mins. No obvious reason was found. But one OAM (connected to bus 9b on host gaudi-2-14) kept reporting excessive power usage (1900 W)  more than the cap (600 W). This spike happened exactly when the training started. Replacing this card made the training complete successfully. 
 The tiles in the heatmap are click-able to focus the dashboard only to that specific host.
 
 <img width="357" alt="image" src="https://github.com/user-attachments/assets/e704f662-27c8-44db-b5bf-4d48ae4004b6">
