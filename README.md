@@ -35,11 +35,16 @@ Stats reported by ethtools for Gaudi internal interfaces during training or HCCL
 Stats reported by ethtools for Gaudi external interfaces during training or HCCL benchmark. The gaudimon collector stitches the output with the connected switchport using LLDP. The output is similar to as shown for Gaudi internal interfaces, but this traffic leaves a server to scale-out training.
 <img width="1707" alt="image" src="https://github.com/user-attachments/assets/fc0ada8c-b6c7-4878-baa8-cf42ace34cb4">
 
-<img width="1708" alt="image" src="https://github.com/user-attachments/assets/afde1dc5-0e3b-46ae-9564-2433080cbf30">
-<img width="1712" alt="image" src="https://github.com/user-attachments/assets/b753a49b-3ad1-4152-8ba8-23f175b8ea8c">
-<img width="1711" alt="image" src="https://github.com/user-attachments/assets/04473f36-c28c-4233-b86c-706c3022a05c">
-<img width="1708" alt="image" src="https://github.com/user-attachments/assets/89c2eef2-b471-494d-acd0-f23c57e37a11">
-<img width="1712" alt="image" src="https://github.com/user-attachments/assets/ed71e330-ed1d-4dc6-a7d9-fae47faea1dc">
+<img width="1715" alt="image" src="https://github.com/user-attachments/assets/e5dcadf3-3cc2-4f45-8c55-e79aac86d158">
+
+<img width="1715" alt="image" src="https://github.com/user-attachments/assets/8de606ff-69a4-428b-93e5-9ea1509cbcc0">
+
+<img width="1704" alt="image" src="https://github.com/user-attachments/assets/90531c29-bb3a-4912-b1b1-bbe1108db1fa">
+
+<img width="1704" alt="image" src="https://github.com/user-attachments/assets/43053e6e-7631-4ff1-a729-2a91f9ee2178">
+
+<img width="1711" alt="image" src="https://github.com/user-attachments/assets/dc41681a-196f-4464-8a5d-9e2aa7da6107">
+
 
 ## Installation
 A typical environment would have many HLS-Gaudi2 servers (e.g. 32) and one monitoring/management server. Install telegraf on all the (32) HLS-Gaudi2 servers and use its exec input plugin to run the collector, gaudi_mon.py. Telegraf then sends the metrics to the same InfluxDB running on the monitoring/management server. Grafana also runs on the monitoring/management server.
