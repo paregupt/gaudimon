@@ -150,6 +150,21 @@ Later, if you like to disable collection of any specific options (such as -iis),
 for i in {11..42}; do (ssh gaudi-2-$i 'scp -r 172.22.36.80:~/gaudimon ~/ ; cp ~/gaudimon/gaudi_mon.py /usr/local/telegraf/gaudi_mon.py;sudo cp ~/gaudimon/telegraf.conf /etc/telegraf/telegraf.conf;sudo systemctl restart telegraf'); done
 ```
 
+### InfluxDB
+Gaudimon doesn't require running InfluxDB on the HLS-Gaudi2 servers. Install InfluxDB only on the management server. The IP of this management server must be used by the outputs.influxdb plugin of telegraf running on the HLS-Gaudi2 servers.
+Used version: 1.8.10
+
+### Grafana
+Like InfluxDB, install Grafana only on the management server and then import the json dashbord file available in the grafana/dashboard directory.
+Used version: 10.4.5
+
+## Dependencies
+In addition to telegraf, influxdb, and grafana, the gaudi_mon.py collector relies on usual Linux commands (like cat, nproc, etc.) and , of course, hl-smi, which is the base of collecting metrics.
+One typical dependency is on the lldptool.
+
+
 ## Notes
 1. This project uses InfluxDB 1.x. No Influx 2.0. No Influx 3.0. 
 2. I have run this code for a few months monitoring 32 HLS-Gaudi2 servers in Cisco labs. Without this monitoring, completing the qualification wasn't possible in the given time frame. I built these use cases out of necessity and all of them have real stories behind them.
+3. This project is not supported by Cisco or Intel.
+4. Gaudimon dashboard cross references Nexus Traffic Monitor (NTM), which is another project I developed for monitoring Cisco Nexus Switches. These two projects can be used together when the inter-Gaudi2 network uses Cisco Nexus switches.
