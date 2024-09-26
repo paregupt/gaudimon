@@ -159,9 +159,24 @@ Like InfluxDB, install Grafana only on the management server and then import the
 Used version: 10.4.5
 
 ## Dependencies
-In addition to telegraf, influxdb, and grafana, the gaudi_mon.py collector relies on usual Linux commands (like cat, nproc, etc.) and , of course, hl-smi, which is the base of collecting metrics.
-One typical dependency is on the lldptool.
+In addition to telegraf, influxdb, and grafana, the gaudi_mon.py collector requires usual Linux commands (like cat, nproc, etc.) and , of course, hl-smi, which is the base of collecting metrics.
+Two other dependencies are ethtool and lldptool.
+ethtool is installed by habanalabs-installer.sh. Refer to Intel Gaudi installation docs.
+lldptool is part of lldpad package. This is different from lldpd, which includes lldpcli. After installing lldpad, configure all Gaudi2 interfaces using lldptool. Use the following hint:
 
+```
+    for net_if in $habana_net_list; do
+        echo ""
+        echo "Enabling LLDP on Habana Interface $net_if..."
+        $my_sudo lldptool -i $net_if set-lldp adminStatus=rxtx
+        $my_sudo lldptool -i $net_if -T -V sysName enableTx=yes
+        $my_sudo lldptool -i $net_if -T -V portDesc enableTx=yes
+        $my_sudo lldptool -i $net_if -T -V sysDesc enableTx=yes
+        $my_sudo lldptool -i $net_if -T -V sysCap enableTx=yes
+        $my_sudo lldptool -i $net_if -T -V mngAddr ipv4=$lldp_mgmt_ip enableTx=yes
+    done
+```
+This can be added in manage_network_ifs.sh supplied by Intel/Habana. habana_net_list inlcudes all Gaudi2 interfaces.
 
 ## Notes
 1. This project uses InfluxDB 1.x. No Influx 2.0. No Influx 3.0. 
