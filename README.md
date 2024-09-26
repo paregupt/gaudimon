@@ -137,12 +137,14 @@ The following is the telegraf.conf config. Change/Edit this in /etc/telegraf/tel
     urls = ["http://<ip>:8086"]
     database = "telegraf"
 ```
-
-All these steps need to be done on all the HLS-Gaudi2 servers. Do the above steps on one server and verify it works. Then copy the files from this server to all the servers using the following 
+Do the above steps on one server and verify. Then instead of repeating on all the HLS-Gaudi2 servers, copy the files from this server to all the servers using the following 
 
 ```
-for i in {11..42}; do (ssh gaudi-2-$i 'scp -r 172.22.36.80:~/gaudimon ~/ ; sudo dpkg -i ~/gaudimon/telegraf_1.29.5-1_amd64.deb ; sudo cp ~/gaudimon/telegraf.service /lib/systemd/system/telegraf.service ; sudo cp ~/gaudimon/telegraf.conf /etc/telegraf/telegraf.conf ; sudo chown -R ciscouser:sudo /var/log/telegraf ; sudo mkdir /usr/local/telegraf ; sudo chown ciscouser:sudo /usr/local/telegraf ; cp ~/gaudimon/gaudi_mon.py /usr/local/telegraf/ ;  sudo systemctl daemon-reload ; sudo systemctl start telegraf '); done
+for i in {11..42}; do (ssh gaudi-2-$i 'scp -r <mgmt_server_ip>:~/gaudimon ~/ ; sudo dpkg -i ~/gaudimon/telegraf_1.29.5-1_amd64.deb ; sudo cp ~/gaudimon/telegraf.service /lib/systemd/system/telegraf.service ; sudo cp ~/gaudimon/telegraf.conf /etc/telegraf/telegraf.conf ; sudo chown -R ciscouser:sudo /var/log/telegraf ; sudo mkdir /usr/local/telegraf ; sudo chown ciscouser:sudo /usr/local/telegraf ; cp ~/gaudimon/gaudi_mon.py /usr/local/telegraf/ ;  sudo systemctl daemon-reload ; sudo systemctl start telegraf '); done
 ```
+
+This assumes mgmt_server_ip is the IP address of a management server with password-less SSH configured for all the HLS-Gaudi servers with hostnames in range gaudi-2-11 to gaudi-2-42. Relevant files are in the ~/gaudimon directory on the magamenet server.
+
 
 ## Notes
 1. This project uses InfluxDB 1.x.
