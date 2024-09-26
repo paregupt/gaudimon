@@ -59,27 +59,26 @@ wget https://dl.influxdata.com/telegraf/releases/telegraf_1.29.5-1_amd64.deb
 sudo dpkg -i telegraf_1.29.5-1_amd64.deb
 ```
 
-Telegraf by default runs as a service by telegraf user. But I prefer running telegraf under a different user with access to sudo command, such as sudo lldptool command that gaudimon uses. So edit /lib/systemd/system/telegraf.service and change User=telegraf to something else, for example User=ciscouser.
+Telegraf by default runs as a service by the telegraf user. But I prefer running telegraf under a different user with access to sudo commands, such as the ```sudo lldptool``` command that gaudimon uses. So edit /lib/systemd/system/telegraf.service and change User=telegraf to something else, for example User=ciscouser.
 
 To allow running sudo command by ciscouser without asking for password, I add a new file, name 91-ciscouser at /etc/sudoers.d/ with the following line
 
 ```
 ciscouser ALL=(ALL) NOPASSWD:ALL
 ```
-Change this content to allow only specific sudo commands without asking for password.
+Change this content to allow only specific sudo commands.
 
 Change ownership of /var/log/telegraf to ciscouser to allow this user to write logs
 ```
 sudo chown -R ciscouser:sudo /var/log/telegraf
 ```
 
-Create /usr/local/telegraf director and copy gaudi_mon.py inside it.
+Create /usr/local/telegraf directory and copy gaudi_mon.py inside it.
 ```
 sudo mkdir /usr/local/telegraf
 sudo chown ciscouser:sudo /usr/local/telegraf
 mv gaudi_mon.py /usr/local/telegraf/
 ```
-sudo cp telegraf.service /lib/systemd/system/telegraf.service
 
 Finally, restart telegraf service
 ```
@@ -143,14 +142,14 @@ Do the above steps on one server and verify. Then instead of repeating on all th
 for i in {11..42}; do (ssh gaudi-2-$i 'scp -r <mgmt_server_ip>:~/gaudimon ~/ ; sudo dpkg -i ~/gaudimon/telegraf_1.29.5-1_amd64.deb ; sudo cp ~/gaudimon/telegraf.service /lib/systemd/system/telegraf.service ; sudo cp ~/gaudimon/telegraf.conf /etc/telegraf/telegraf.conf ; sudo chown -R ciscouser:sudo /var/log/telegraf ; sudo mkdir /usr/local/telegraf ; sudo chown ciscouser:sudo /usr/local/telegraf ; cp ~/gaudimon/gaudi_mon.py /usr/local/telegraf/ ;  sudo systemctl daemon-reload ; sudo systemctl start telegraf '); done
 ```
 
-This assumes mgmt_server_ip is the IP address of a management server with password-less SSH configured for all the HLS-Gaudi servers with hostnames in range gaudi-2-11 to gaudi-2-42. Relevant files are in the ~/gaudimon directory on the magamenet server.
+This assumes mgmt_server_ip is the IP address of a management server with password-less SSH configured for all the HLS-Gaudi2 servers with hostnames in range gaudi-2-11 to gaudi-2-42. Relevant files are in the ~/gaudimon directory on the magamenet server.
 
-Later, if you like to disable collection of any specific options (such as -iis), make the change in the telegraf.conf on the management server, copy the changed file on all the HLS-Gaudi2 servers, and testart telegraf service.
+Later, if you like to disable collection of any specific options (such as -iis), make the change in the telegraf.conf on the management server, copy the changed file on all the HLS-Gaudi2 servers, and restart telegraf service.
 
 ```
 for i in {11..42}; do (ssh gaudi-2-$i 'scp -r 172.22.36.80:~/gaudimon ~/ ; cp ~/gaudimon/gaudi_mon.py /usr/local/telegraf/gaudi_mon.py;sudo cp ~/gaudimon/telegraf.conf /etc/telegraf/telegraf.conf;sudo systemctl restart telegraf'); done
 ```
 
 ## Notes
-1. This project uses InfluxDB 1.x.
-2. This project has run successfully for a few months monitoring Intel Gaudi 2 accelerators.
+1. This project uses InfluxDB 1.x. No Influx 2.0. No Influx 3.0. 
+2. I have run this code for a few months monitoring 32 HLS-Gaudi2 servers in Cisco labs. Without this monitoring, completing the qualification wasn't possible in the given time frame. I built these use cases out of necessity and all of them have real stories behind them.
