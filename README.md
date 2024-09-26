@@ -51,17 +51,44 @@ These detailed graphs explain obscure problems. For example, these graphs show t
 ## Installation
 A typical environment would have many HLS-Gaudi2 servers (e.g. 32) and one monitoring/management server. Install telegraf on all the (32) HLS-Gaudi2 servers and use its exec input plugin to run the collector, gaudi_mon.py. Telegraf then sends the metrics to the same InfluxDB running on the monitoring/management server. Grafana also runs on the monitoring/management server.
 
-Ubuntun packages are available in this project.
-
 ### Telegraf
 Install telegraf on all the HLS2-Gaudi2 servers.
-Tested version: 1.29.5
+Used version: 1.29.5. But any other telegraf version should work.
 ```
+wget https://dl.influxdata.com/telegraf/releases/telegraf_1.29.5-1_amd64.deb 
 sudo dpkg -i telegraf_1.29.5-1_amd64.deb
 ```
-Create /usr/local/telegraf director and copy gaudi_mon.py inside it.
 
-The following is the telegraf.conf config
+Telegraf by default runs as a service by telegraf user. But I prefer running telegraf under a different user with access to sudo command, such as sudo lldptool command that gaudimon uses. So edit /lib/systemd/system/telegraf.service and change User=telegraf to something else, for example User=ciscouser.
+
+To allow running sudo command by ciscouser without asking for password, I add a new file, name 91-ciscouser at /etc/sudoers.d/ with the following line
+
+```
+ciscouser ALL=(ALL) NOPASSWD:ALL
+```
+Change this content to allow only specific sudo commands without asking for password.
+
+Change ownership of /var/log/telegraf to ciscouser to allow this user to write logs
+```
+sudo chown -R ciscouser:sudo /var/log/telegraf
+```
+
+Create /usr/local/telegraf director and copy gaudi_mon.py inside it.
+```
+sudo mkdir /usr/local/telegraf
+sudo chown ciscouser:sudo /usr/local/telegraf
+mv gaudi_mon.py /usr/local/telegraf/
+```
+sudo cp telegraf.service /lib/systemd/system/telegraf.service
+
+Finally, restart telegraf service
+```
+sudo systemctl daemon-reload
+sudo systemctl start telegraf
+```
+
+The following is the telegraf.conf config. Change/Edit this in /etc/telegraf/telegraf.conf
+
 ```
   logfile = "/var/log/telegraf/telegraf.log"
   logfile_rotation_max_size = "10MB"
@@ -98,17 +125,23 @@ The following is the telegraf.conf config
    ]
    data_format = "influx"
 
-#[[inputs.exec]]
-#   interval = "60s"
-#   commands = [
-#       "python3 /usr/local/telegraf/gaudi_mon.py -eis -sobm -vv influxdb-lp",
-#   ]
-#   timeout = "59s"
-#   data_format = "influx"
+[[inputs.exec]]
+   interval = "60s"
+   commands = [
+       "python3 /usr/local/telegraf/gaudi_mon.py -eis -sobm -vv influxdb-lp",
+   ]
+   timeout = "59s"
+   data_format = "influx"
 
  [[outputs.influxdb]]
     urls = ["http://<ip>:8086"]
     database = "telegraf"
+```
+
+All these steps need to be done on all the HLS-Gaudi2 servers. Do the above steps on one server and verify it works. Then copy the files from this server to all the servers using the following 
+
+```
+for i in {11..42}; do (ssh gaudi-2-$i 'scp -r 172.22.36.80:~/gaudimon ~/ ; sudo dpkg -i ~/gaudimon/telegraf_1.29.5-1_amd64.deb ; sudo cp ~/gaudimon/telegraf.service /lib/systemd/system/telegraf.service ; sudo cp ~/gaudimon/telegraf.conf /etc/telegraf/telegraf.conf ; sudo chown -R ciscouser:sudo /var/log/telegraf ; sudo mkdir /usr/local/telegraf ; sudo chown ciscouser:sudo /usr/local/telegraf ; cp ~/gaudimon/gaudi_mon.py /usr/local/telegraf/ ;  sudo systemctl daemon-reload ; sudo systemctl start telegraf '); done
 ```
 
 ## Notes
