@@ -145,6 +145,11 @@ for i in {11..42}; do (ssh gaudi-2-$i 'scp -r <mgmt_server_ip>:~/gaudimon ~/ ; s
 
 This assumes mgmt_server_ip is the IP address of a management server with password-less SSH configured for all the HLS-Gaudi servers with hostnames in range gaudi-2-11 to gaudi-2-42. Relevant files are in the ~/gaudimon directory on the magamenet server.
 
+Later, if you like to disable collection of any specific options (such as -iis), make the change in the telegraf.conf on the management server, copy the changed file on all the HLS-Gaudi2 servers, and testart telegraf service.
+
+```
+for i in {11..42}; do (ssh gaudi-2-$i 'scp -r 172.22.36.80:~/gaudimon ~/ ; cp ~/gaudimon/gaudi_mon.py /usr/local/telegraf/gaudi_mon.py;sudo cp ~/gaudimon/telegraf.conf /etc/telegraf/telegraf.conf;sudo systemctl restart telegraf'); done
+```
 
 ## Notes
 1. This project uses InfluxDB 1.x.
