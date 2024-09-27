@@ -1,5 +1,5 @@
 # Monitor Intel Gaudi Accelerators using Grafana, InfluxDB and Telegraf.
-The exec input plugin in telegraf runs the collector, gaudi_mon.py and sends the data to the output plugin, influxdb. Grafana reads from influxdb to serve the following and many more use cases.
+The exec input plugin in telegraf runs the gaudimon collector (gaudi_mon.py) and sends the data to the output plugin, influxdb. Grafana reads from influxdb to serve the following and many more use cases.
 ## Use Cases
 31 hosts in a training cluster, each host with eight Gaudi accelerators (OAMs). All 248 OAMs in good health (shown in green).
 <img width="1716" alt="image" src="https://github.com/user-attachments/assets/d83de828-1192-4168-ae75-8f46b608e49e">
